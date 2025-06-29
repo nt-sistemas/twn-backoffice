@@ -15,18 +15,18 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-        /*
-        Cliente::factory(100)->create();
+
+        Cliente::factory(500)->create();
 
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-        ]);*/
+        ]);
 
         $clientes = Cliente::all();
         foreach ($clientes as $cliente) {
             $cliente->cobrancas()->createMany(
-                \App\Models\Cobranca::factory(rand(1, 3))->make()->toArray()
+                \App\Models\Cobranca::factory(rand(1, 5))->make()->toArray()
             );
         }
     }
