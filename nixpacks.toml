@@ -9,6 +9,8 @@ cmds = [
     "chmod +x /assets/start.sh",
     "..."
 ]
+[php]
+extensions = ["redis"]
 
 [start]
 cmd = '/assets/start.sh'
