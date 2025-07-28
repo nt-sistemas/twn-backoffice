@@ -1,0 +1,125 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\InvoiceResource\Pages;
+use App\Models\Invoice;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class InvoiceResource extends Resource
+{
+    protected static ?string $model = Invoice::class;
+
+    protected static ?string $navigationLabel = 'Faturas';
+
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Select::make('invoice_type_id')
+                    ->label('Tipo de Fatura')
+                    ->relationship('invoiceType', 'name')
+                    ->required()
+                    ->preload(),
+                Forms\Components\Select::make('customer_id')
+                    ->label('Cliente')
+                    ->relationship('customer', 'title')
+                    ->preload()
+                    ->required(),
+                Forms\Components\TextInput::make('reference')
+                    ->maxLength(255),
+                Forms\Components\DatePicker::make('due_date')
+                    ->required(),
+                Forms\Components\TextInput::make('amount')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\TextInput::make('paid_amount')
+                    ->required()
+                    ->numeric()
+                    ->default(0.00),
+                Forms\Components\TextInput::make('status')
+                    ->required(),
+                Forms\Components\Textarea::make('notes')
+                    ->columnSpanFull(),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('invoiceType.name')
+                    ->label('Tipo de Fatura')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('customer.name')
+                    ->label('Cliente')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('reference')
+                    ->label('Referência')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('due_date')
+                    ->label('Data de Vencimento')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('amount')
+                    ->label('Valor')
+                    ->money('BRL')
+                    ->sortable(),
+
+                Tables\Columns\IconColumn::make('status')
+                    ->icon(fn (string $state): string => match ($state) {
+                        'pending' => 'heroicon-o-clock',
+                        'paid' => 'heroicon-o-check-circle',
+                        'overdue' => 'heroicon-o-trash',
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'paid' => 'success',
+                        'overdue' => 'danger',
+                    }),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListInvoices::route('/'),
+            'create' => Pages\CreateInvoice::route('/create'),
+            'edit' => Pages\EditInvoice::route('/{record}/edit'),
+        ];
+    }
+}
