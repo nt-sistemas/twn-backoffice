@@ -1,6 +1,6 @@
 [phases.setup]
 nixPkgs = ["...", "python311Packages.supervisor"]
-apt = ["php82-redis"]
+apt = ["php-redis"]
 
 [phases.build]
 cmds = [
