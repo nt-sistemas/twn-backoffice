@@ -13,6 +13,7 @@ cmds = [
 [start]
 cmd = '/assets/start.sh'
 
+
 [staticAssets]
 "start.sh" = '''
 #!/bin/bash
