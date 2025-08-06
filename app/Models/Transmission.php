@@ -15,6 +15,9 @@ class Transmission extends Model
         'customer_id',
         'amount',
         'status',
+        'transmission_date',
+        'response_code',
+        'response_message',
     ];
 
     protected $casts = [

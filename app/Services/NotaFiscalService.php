@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\SendNFSe;
+use App\Models\City;
 use App\Models\Customer;
 use App\Models\InvoiceType;
 use App\Models\Transmission;
-use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 
 class NotaFiscalService
 {
@@ -16,71 +18,69 @@ class NotaFiscalService
 
     public function sendIntegration(array $data)
     {
-
         $customer = Customer::where('id', $data['customer_id'])->first();
         $type_invoice = InvoiceType::where('id', $data['invoice_type_id'])->first();
 
-        $client = new Client;
-        $headers = [
-            'Content-Type' => 'application/xml',
-            'Authorization' => 'Basic NDczODcyMjcwMDAxMDM6QFR3bjM4NzIyNw==',
-            'Cookie' => 'PHPSESSID=ssojn0u0raq7tn6q9lih29tp83; cidade=padrao',
-        ];
-        $body = '<nfse>
-        <nfse_teste>1</nfse_teste>
-	<nf>
-        <valor_total>'.$data['amount'].'</valor_total>
-		<valor_desconto>0,00</valor_desconto>
-		<valor_ir>0,00</valor_ir>
-		<valor_inss>0,00</valor_inss>
-		<valor_contribuicao_social>0,00</valor_contribuicao_social>
-		<valor_rps>0,00</valor_rps>
-		<valor_pis>0,00</valor_pis>
-		<valor_cofins>0,00</valor_cofins>
-		<observacao>0</observacao>
-	</nf>
-	<prestador>
-		<cpfcnpj>47387227000103</cpfcnpj>
-		<cidade>8771</cidade>
-	</prestador>
-	<tomador>
-		<tipo>J</tipo>
-		<cpfcnpj>'.$customer->document.'</cpfcnpj>
-		<ie></ie>
-		<sobrenome_nome_fantasia>'.$customer->name.'</sobrenome_nome_fantasia>
-		<nome_razao_social>'.$customer->name.'</nome_razao_social>
-	</tomador>
-	<itens>
-		<lista>
-			<codigo_local_prestacao_servico>8771</codigo_local_prestacao_servico>
-			<codigo_atividade>3089</codigo_atividade>
-			<codigo_item_lista_servico>105</codigo_item_lista_servico>
-			<descritivo>'.$type_invoice->name.' - '.$data['reference'].'</descritivo>
-			<aliquota_item_lista_servico>2,1700</aliquota_item_lista_servico>
-			<situacao_tributaria>0</situacao_tributaria>
-			<valor_tributavel>'.$data['amount'].'</valor_tributavel>
-			<valor_deducao>0,00</valor_deducao>
-			<valor_issrf>0,00</valor_issrf>
-			<valor_desconto_incondicional>0,00</valor_desconto_incondicional>
-			<tributa_municipio_prestador>S</tributa_municipio_prestador>
-		</lista>
-	</itens>
-</nfse>
-';
+        $transmissionExists = Transmission::where('invoice_id', $data['id'])
+            ->where('customer_id', $data['customer_id'])
+            ->where('amount', $data['amount'])
+            ->where('transmission_date', $data['paid_date'])
+            ->exists();
 
-        $transmission = new Transmission;
+        if ($transmissionExists) {
+            return redirect()->route('filament.app.resources.invoices.edit', $data['id'])
+                ->with('error', 'Transmission already exists for this invoice.');
+        }
+
+
+        $transmission = new Transmission();
         $transmission->invoice_id = $data['id'];
         $transmission->customer_id = $data['customer_id'];
         $transmission->amount = $data['amount'];
         $transmission->status = 'transmitting';
+        $transmission->transmission_date = $data['paid_date'];
         $transmission->save();
+
+        $ibgeCode = City::where('name', $customer->city)
+            ->where('state', $customer->state)
+            ->first();
+
+
+
+        if (!$ibgeCode) {
+            return redirect()->route('filament.app.resources.invoices.edit', $data['id'])
+                ->with('error', 'City not found for the provided customer details.');
+        }
+
+        // Prepare data for the job
+
+        $sendData = [
+            'id' => $data['id'],
+            'customer_id' => $customer->id,
+            'razao_social' => $customer->name,
+            'document' => str_replace(['.', '/', '-'], '', $customer->document),
+            'amount' => $data['amount'],
+            'paid_date' => $data['paid_date'],
+            'ibge_code' => $ibgeCode->ibge_code,
+            'descriptions' => $type_invoice->name . ' - ' . $data['reference'],
+            'address' => $customer->address,
+            'number' => $customer->number,
+            'complement' => $customer->complement,
+            'neighborhood' => $customer->neighborhood,
+            'city' => $customer->city,
+            'state' => $customer->state,
+            'postal_code' => str_replace(['.', '/', '-'], '', $customer->postal_code),
+        ];
+
+
+        SendNFSe::dispatch($sendData)
+            ->delay(now()->addSeconds(5));
 
         return redirect()->route('filament.app.resources.transmissions.index');
 
-        // dd($body);
+
         // $request = new Request('POST', 'https://novohamburgo.atende.net/?pg=services&service=WNENotaFiscalEletronicaNfe&wsdl', $headers, $body);
         // $res = $client->sendAsync($request)->wait();
         // echo $res->getBody();
-
     }
 }

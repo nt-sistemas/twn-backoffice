@@ -3,17 +3,19 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerResource\Pages;
+use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
-
     protected static ?string $navigationLabel = 'Clientes';
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
@@ -23,31 +25,64 @@ class CustomerResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->label('Razão Social')
+                ->label('Nome ou Razão Social')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('document')
-                    ->label('CNPJ')
+                ->label('CPF/CNPJ')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('title')
-                    ->label('Cliente')
+                ->label('Nome Fantasia')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('registration')
-                    ->label('Matrícula')
+                    ->label('Matrícula HS')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
-                    ->label('E-mail Financeiro')
                     ->email()
                     ->maxLength(255),
+                Forms\Components\TextInput::make('phone')
+                    ->label('Telefone')
+                    ->tel()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('address')
+                    ->label('Endereço')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('neighborhood')
+                    ->label('Bairro')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('number')
+                    ->label('Número')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('complement')
+                    ->label('Complemento')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('city')
+                    ->label('Cidade')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('state')
+                    ->label('Estado')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('postal_code')
+                    ->label('CEP')
+                    ->maxLength(255),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Ativo')
+                    ->required(),                
                 Forms\Components\Toggle::make('implementation_fee')
                     ->label('Taxa de Implementação')
                     ->required(),
                 Forms\Components\Toggle::make('monthly_fee')
                     ->label('Taxa Mensal')
                     ->required(),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('status')
                     ->label('Status')
+                    ->options([
+                        'active' => 'Ativo',
+                        'inactive' => 'Inativo',
+                        'pending' => 'Pendente',
+                        'suspended' => 'Suspenso',
+                    ])
                     ->required(),
                 Forms\Components\Textarea::make('observation')
                     ->label('Observação')
@@ -59,31 +94,20 @@ class CustomerResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')
-                    ->label('Cliente')
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nome ou Razão Social')
                     ->searchable(),
-
                 Tables\Columns\TextColumn::make('document')
-                    ->label('CNPJ')
+                    ->label('CPF/CNPJ')
                     ->searchable(),
-
+                Tables\Columns\TextColumn::make('title')
+                    ->label('Nome Fantasia')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('registration')
-                    ->label('Matrícula')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('email')
-                    ->label('E-mail Financeiro')
-                    ->searchable(),
-
-                Tables\Columns\IconColumn::make('status')
-                    ->icon(fn (string $state): string => match ($state) {
-                        'active' => 'heroicon-o-check-circle',
-                        'inactive' => 'heroicon-o-trash',
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'active' => 'success',
-                        'inactive' => 'danger',
-                    }),
-
+                    ->label('Matrícula HS')
+                    ->searchable(),                
+                Tables\Columns\TextColumn::make('status'),
+                
             ])
             ->filters([
                 //

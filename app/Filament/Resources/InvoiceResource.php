@@ -29,21 +29,34 @@ class InvoiceResource extends Resource
                     ->preload(),
                 Forms\Components\Select::make('customer_id')
                     ->label('Cliente')
-                    ->relationship('customer', 'title')
+                    ->relationship('customer', 'name')
                     ->preload()
                     ->required(),
                 Forms\Components\TextInput::make('reference')
+                    ->label('Referencia')
                     ->maxLength(255),
                 Forms\Components\DatePicker::make('due_date')
+                    ->label('Data de Vencimento')
+                    ->required(),
+                Forms\Components\DatePicker::make('paid_date')
+                    ->label('Data de Pagamento')
                     ->required(),
                 Forms\Components\TextInput::make('amount')
+                ->label('Valor da Fatura')
                     ->required()
                     ->numeric(),
                 Forms\Components\TextInput::make('paid_amount')
+                    ->label('Valor Pago')
                     ->required()
                     ->numeric()
                     ->default(0.00),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('status')
+                    ->label('Status')
+                    ->options([
+                    'pending' => 'Pendente',
+                    'paid' => 'Pago',
+                    'overdue' => 'Vencido',
+                ])
                     ->required(),
                 Forms\Components\Textarea::make('notes')
                     ->columnSpanFull(),

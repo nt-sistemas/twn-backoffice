@@ -19,6 +19,15 @@ class Customer extends Model
         'implementation_fee',
         'monthly_fee',
         'observation',
+        'phone',
+        'address',
+        'number',
+        'complement',
+        'city',
+        'neighborhood',
+        'state',
+        'postal_code',
+        'notes',
         'status',
     ];
 

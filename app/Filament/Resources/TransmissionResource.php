@@ -22,18 +22,26 @@ class TransmissionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('invoice_id')
+                Forms\Components\Select::make('invoice_id')
+                    ->label('Tipo de Fatura')
+                    ->relationship('invoice', 'reference')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('customer_id')
-                    ->required()
-                    ->numeric(),
+                    ->preload(),
+                Forms\Components\Select::make('customer_id')
+                    ->label('Cliente')
+                    ->relationship('customer', 'name')
+                    ->preload()
+                    ->required(),
                 Forms\Components\TextInput::make('amount')
+                    ->label('Valor da Nota Fiscal')
                     ->required()
                     ->numeric()
                     ->default(0.00),
                 Forms\Components\TextInput::make('status')
                     ->required(),
+                Forms\Components\Textarea::make('response_message')
+                    ->label('Resposta WebService')
+                    ->columnSpanFull(),
             ]);
     }
 
