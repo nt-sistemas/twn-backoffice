@@ -95,8 +95,8 @@ class SendNFSe implements ShouldQueue
 <RazaoSocial>' . $this->data['razao_social'] . '</RazaoSocial>
 <Endereco>
 <Endereco>' . $this->data['address'] . '</Endereco>
-<Numero>' . $this->data['number'] . '</Numero>
-<Complemento>' . $this->data['complement'] . '</Complemento>
+<Numero>' . $this->data['number'] . '</Numero>'. PHP_EOL .
+(isset($this->data['complement']) && $this->data['complement'] !== null ? '<Complemento>' . $this->data['complement'] . '</Complemento>' : '') . '
 <Bairro>' . $this->data['neighborhood'] . '</Bairro>
 <CodigoMunicipio>' . $this->data['ibge_code'] . '</CodigoMunicipio>
 <Uf>' . $this->data['state'] . '</Uf>
@@ -132,6 +132,7 @@ class SendNFSe implements ShouldQueue
 </soapenv:Body>
 </soapenv:Envelope>
 ';
+
 
         $request = new Request('POST', 'https://novohamburgo.atende.net/?pg=services&service=WNENotaFiscalEletronicaNfe', $headers, $body);
         $res = $client->sendAsync($request)->wait();

@@ -73,8 +73,8 @@ class NotaFiscalService
         ];
 
 
-        SendNFSe::dispatch($sendData)
-            ->delay(now()->addSeconds(5));
+        SendNFSe::dispatch($sendData);
+           
 
         return redirect()->route('filament.app.resources.transmissions.index');
 
