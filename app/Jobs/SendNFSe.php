@@ -95,7 +95,7 @@ class SendNFSe implements ShouldQueue
 <RazaoSocial>' . $this->data['razao_social'] . '</RazaoSocial>
 <Endereco>
 <Endereco>' . $this->data['address'] . '</Endereco>
-<Numero>' . $this->data['number'] . '</Numero>'. PHP_EOL .
+<Numero>' . $this->data['number'] . '</Numero>' . PHP_EOL .
 (isset($this->data['complement']) && $this->data['complement'] !== null ? '<Complemento>' . $this->data['complement'] . '</Complemento>' : '') . '
 <Bairro>' . $this->data['neighborhood'] . '</Bairro>
 <CodigoMunicipio>' . $this->data['ibge_code'] . '</CodigoMunicipio>
@@ -141,7 +141,7 @@ class SendNFSe implements ShouldQueue
         }
         // Update the transmission status and response
 
-        Log::info('NFSe sent successfully'. (string) $res->getBody()->getContents());
+        Log::info('NFSe sent successfully' . (string) $res->getBody()->getContents());
 
         $transmission = Transmission::where('invoice_id', $this->data['id'])
             ->where('customer_id', $this->data['customer_id'])
@@ -154,33 +154,5 @@ class SendNFSe implements ShouldQueue
         $transmission->response_code = 200;
         $transmission->response_message = (string) $res->getBody()->getContents();
         $transmission->save();
-    }
-
-    public function sendHttp2Reuquest()
-    {
-        $request = new HTTP_Request2();
-        $request->setUrl('https://novohamburgo.atende.net/?pg=services&service=WNENotaFiscalEletronicaNfe');
-        $request->setMethod(HTTP_Request2::METHOD_POST);
-        $request->setConfig([
-            'follow_redirects' => true,
-        ]);
-        $request->setHeader([
-            'Content-Type' => 'application/xml',
-            'Authorization' => '••••••',
-            'Cookie' => 'PHPSESSID=3nnfh4v832b70scq3carkp9vs7; cidade=padrao',
-        ]);
-        $request->setBody('<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:net="net.atende">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <GerarNfseEnvio>\n            <Rps>\n<InfDeclaracaoPrestacaoServico xmlns="http://www.abrasf.org.br/nfse.xsd" Id="RPS_1">\n<Competencia>2025-07-10</Competencia> \n<Servico>\n<Valores>\n<ValorServicos>500.00</ValorServicos>\n<ValorDeducoes>0</ValorDeducoes>\n<ValorPis>00.00</ValorPis>\n<ValorCofins>00.00</ValorCofins>\n<ValorInss>00.00</ValorInss>\n<ValorIr>00.00</ValorIr>\n<ValorCsll>00.00</ValorCsll>\n<OutrasRetencoes>00.00</OutrasRetencoes>\n                            <Aliquota>2.1700</Aliquota>\n</Valores>\n<IssRetido>2</IssRetido>\n<ItemListaServico>01.05</ItemListaServico>\n<CodigoCnae>3089</CodigoCnae>\n<!--<CodigoTributacaoMunicipio>14.01</CodigoTributacaoMunicipio>-->\n<Discriminacao>Mensalidade - Julho 2025</Discriminacao>\n<CodigoMunicipio>4313409</CodigoMunicipio>\n<ExigibilidadeISS>1</ExigibilidadeISS>\n<MunicipioIncidencia>4313409</MunicipioIncidencia>                       \n</Servico>\n<Prestador>\n<CpfCnpj>\n<Cnpj>47387227000103</Cnpj>\n</CpfCnpj>\n\n</Prestador>\n<TomadorServico>\n<IdentificacaoTomador>\n<CpfCnpj>\n<!--<Cnpj>63513983000180</Cnpj>-->\n<Cnpj>35537917000104</Cnpj>\n</CpfCnpj>\n</IdentificacaoTomador>\n<RazaoSocial>CAPITAL LIVE SERVICOS EIRELI</RazaoSocial>\n                        <Endereco>\n<Endereco>Rua Tenente Ary Rauen</Endereco>\n<Numero>596 </Numero>\n<Complemento>sl 2</Complemento>\n<Bairro>Centro </Bairro>\n<CodigoMunicipio>4210100</CodigoMunicipio>\n<Uf>SC</Uf>\n<Cep>89300052</Cep>\n</Endereco> \n\n</TomadorServico>\n\n<RegimeEspecialTributacao>1</RegimeEspecialTributacao>\n<OptanteSimplesNacional>1</OptanteSimplesNacional>\n<IncentivoFiscal>2</IncentivoFiscal>\n</InfDeclaracaoPrestacaoServico>\n<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">\n<SignedInfo>\n<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />\n<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />\n<Reference URI="#R1">\n<Transforms>\n<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />\n<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />\n</Transforms>\n<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />\n<DigestValue>SPiPQZk/MC0rfgztPD3UmlCYkN8=</DigestValue>\n</Reference>\n</SignedInfo>\n<SignatureValue>aYCjQY3hlJSw8b2w/EpiaeZSrKdJ6mVW1xW+s5R7AY5MLXaA/mBQnkftl6COgwEM9keHtOYvqR8Yys25IfY21ZGaE/ow2LHoMZTdb06xsJl1C9mmBXSqfihK9pDKrhZPklza9nbSxOVIJNbMKLszbZRM9sJHFIE6Hc7Oy3s6+Qc=</SignatureValue>\n<KeyInfo>\n<X509Data>\n<X509Certificate>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</X509Certificate>\n</X509Data>\n</KeyInfo>\n</Signature>\n</Rps>\n         </GerarNfseEnvio>\n   </soapenv:Body>\n</soapenv:Envelope>');
-
-        try {
-            $response = $request->send();
-            if ($response->getStatus() == 200) {
-                echo $response->getBody();
-            } else {
-                echo 'Unexpected HTTP status: ' . $response->getStatus() . ' ' .
-                $response->getReasonPhrase();
-            }
-        } catch (HTTP_Request2_Exception $e) {
-            echo 'Error: ' . $e->getMessage();
-        }
     }
 }
