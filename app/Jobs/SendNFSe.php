@@ -153,7 +153,7 @@ class SendNFSe implements ShouldQueue
 
         $transmission->status = 'transmitted';
         $transmission->response_code = 200;
-        $transmission->response_message = (string) $res->getBody()->getContents();
+        $transmission->response_message = $res->getBody()->getContents();
         $transmission->save();
     }
 }

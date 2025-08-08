@@ -7,6 +7,7 @@ use App\Models\City;
 use App\Models\Customer;
 use App\Models\InvoiceType;
 use App\Models\Transmission;
+use Filament\Notifications\Notification;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -28,9 +29,28 @@ class NotaFiscalService
             ->where('transmission_date', $data['paid_date'])
             ->exists();
 
+        $ibgeCode = City::where('name', $customer->city)
+        ->where('state', $customer->state)
+        ->first();
+
+
+
+        if (!$ibgeCode) {
+            Notification::make()
+               ->title('Cidade IBGE ')
+               ->body('A cidade e estado fornecidos para o cliente não correspondem a nenhum registro em nosso banco de dados. Por favor, verifique os detalhes do cliente e tente novamente.')
+               ->color('danger')
+               ->send();
+        }
+
         if ($transmissionExists) {
-            return redirect()->route('filament.app.resources.invoices.edit', $data['id'])
-                ->with('error', 'Transmission already exists for this invoice.');
+            Notification::make()
+              ->title('Já existe um envio de Nota para esta fatura')
+              ->body('Uma transmissão com os mesmos dados já foi criada para esta fatura. Verifique os detalhes e tente novamente.')
+              ->color('danger')
+              ->send();
+
+            return redirect()->route('filament.app.resources.invoices.edit', $data['id']);
         }
 
 
@@ -42,16 +62,7 @@ class NotaFiscalService
         $transmission->transmission_date = $data['paid_date'];
         $transmission->save();
 
-        $ibgeCode = City::where('name', $customer->city)
-            ->where('state', $customer->state)
-            ->first();
 
-
-
-        if (!$ibgeCode) {
-            return redirect()->route('filament.app.resources.invoices.edit', $data['id'])
-                ->with('error', 'City not found for the provided customer details.');
-        }
 
         // Prepare data for the job
 
@@ -72,6 +83,8 @@ class NotaFiscalService
             'state' => $customer->state,
             'postal_code' => str_replace(['.', '/', '-'], '', $customer->postal_code),
         ];
+
+
 
         Log::info('Sending NFSe with data to QUEUE: ' . json_encode($sendData));
 
