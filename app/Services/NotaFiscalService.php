@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\InvoiceType;
 use App\Models\Transmission;
 use GuzzleHttp\Psr7\Request;
+use Illuminate\Support\Facades\Log;
 
 class NotaFiscalService
 {
@@ -72,9 +73,10 @@ class NotaFiscalService
             'postal_code' => str_replace(['.', '/', '-'], '', $customer->postal_code),
         ];
 
+        Log::info('Sending NFSe with data to QUEUE: ' . json_encode($sendData));
 
-        SendNFSe::dispatch($sendData);
-           
+        SendNFSe::dispatch($sendData)->delay(now()->addSeconds(5));
+
 
         return redirect()->route('filament.app.resources.transmissions.index');
 

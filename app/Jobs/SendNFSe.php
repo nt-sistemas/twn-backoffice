@@ -29,6 +29,7 @@ class SendNFSe implements ShouldQueue
      */
     public function handle(): void
     {
+        log::info('Sending NFSe with data: ' . json_encode($this->data));
         $this->sendIntegration();
 
         //$transmission->status = 'transmitted';
