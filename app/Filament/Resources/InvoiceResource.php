@@ -78,26 +78,26 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('reference')
                     ->label('Referência')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('due_date')
-                    ->label('Data de Vencimento')
-                    ->date()
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Valor')
                     ->money('BRL')
                     ->sortable(),
 
-                Tables\Columns\IconColumn::make('status')
+Tables\Columns\IconColumn::make('transmission.status')
+                    ->label('Nota Fiscal')
                     ->icon(fn (string $state): string => match ($state) {
-                        'pending' => 'heroicon-o-clock',
-                        'paid' => 'heroicon-o-check-circle',
-                        'overdue' => 'heroicon-o-trash',
+                        'transmitting' => 'heroicon-o-clock',
+                        'transmitted' => 'heroicon-o-check-circle',
+                        'error' => 'heroicon-o-trash',
                     })
                     ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'paid' => 'success',
-                        'overdue' => 'danger',
-                    }),
+                        'transmitting' => 'warning',
+                        'transmitted' => 'success',
+                        'error' => 'danger',
+                    })
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

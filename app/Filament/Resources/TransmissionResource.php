@@ -53,6 +53,9 @@ class TransmissionResource extends Resource
                     ->label('Faturas')
                     ->numeric()
                     ->sortable(),
+                    Tables\Columns\TextColumn::make('invoice.reference')
+                    ->label('Referência')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('customer.name')
                     ->label('Cliente')
                     ->numeric()
