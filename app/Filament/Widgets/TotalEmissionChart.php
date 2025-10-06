@@ -16,7 +16,7 @@ class TotalEmissionChart extends ChartWidget
     {
         $data = Transmission::query()
             ->selectRaw('SUM(amount) as total')
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month")
+            ->selectRaw("DATE_FORMAT(transmission_date, '%Y-%m') as month")
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month')
