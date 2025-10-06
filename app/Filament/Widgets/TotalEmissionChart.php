@@ -17,6 +17,7 @@ class TotalEmissionChart extends ChartWidget
         $data = Transmission::query()
             ->selectRaw('SUM(amount) as total')
             ->selectRaw("DATE_FORMAT(transmission_date, '%Y-%m') as month")
+            ->where('status', 'transmitted')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month')
@@ -35,6 +36,8 @@ class TotalEmissionChart extends ChartWidget
             'datasets' => [
                 [
                     'label' => 'Valor total emitido',
+                    'backgroundColor' => 'rgba(54, 162, 235, 0.5)',
+                    'borderColor' => 'rgb(54, 162, 235)',
                     'data' => $chart['datasets'],
                 ],
             ],
