@@ -42,7 +42,7 @@ class InvoiceResource extends Resource
                     ->label('Data de Pagamento')
                     ->required(),
                 Forms\Components\TextInput::make('amount')
-                ->label('Valor da Fatura')
+                    ->label('Valor da Fatura')
                     ->required()
                     ->numeric(),
                 Forms\Components\TextInput::make('paid_amount')
@@ -53,10 +53,10 @@ class InvoiceResource extends Resource
                 Forms\Components\Select::make('status')
                     ->label('Status')
                     ->options([
-                    'pending' => 'Pendente',
-                    'paid' => 'Pago',
-                    'overdue' => 'Vencido',
-                ])
+                        'pending' => 'Pendente',
+                        'paid' => 'Pago',
+                        'overdue' => 'Vencido',
+                    ])
                     ->required(),
                 Forms\Components\Textarea::make('notes')
                     ->columnSpanFull(),
@@ -84,14 +84,14 @@ class InvoiceResource extends Resource
                     ->money('BRL')
                     ->sortable(),
 
-Tables\Columns\IconColumn::make('transmission.status')
+                Tables\Columns\IconColumn::make('transmission.status')
                     ->label('Nota Fiscal')
-                    ->icon(fn (string $state): string => match ($state) {
+                    ->icon(fn(string $state): string => match ($state) {
                         'transmitting' => 'heroicon-o-clock',
                         'transmitted' => 'heroicon-o-check-circle',
                         'error' => 'heroicon-o-trash',
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'transmitting' => 'warning',
                         'transmitted' => 'success',
                         'error' => 'danger',
@@ -117,7 +117,7 @@ Tables\Columns\IconColumn::make('transmission.status')
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

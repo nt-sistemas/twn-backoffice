@@ -25,15 +25,15 @@ class CustomerResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                ->label('Nome ou Razão Social')
+                    ->label('Nome ou Razão Social')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('document')
-                ->label('CPF/CNPJ')
+                    ->label('CPF/CNPJ')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('title')
-                ->label('Nome Fantasia')
+                    ->label('Nome Fantasia')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('registration')
                     ->label('Matrícula HS')
@@ -62,13 +62,13 @@ class CustomerResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('state')
                     ->label('Estado')
-                    ->maxLength(255),
+                    ->maxLength(2),
                 Forms\Components\TextInput::make('postal_code')
                     ->label('CEP')
                     ->maxLength(255),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Ativo')
-                    ->required(),                
+                    ->required(),
                 Forms\Components\Toggle::make('implementation_fee')
                     ->label('Taxa de Implementação')
                     ->required(),
@@ -105,9 +105,12 @@ class CustomerResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('registration')
                     ->label('Matrícula HS')
-                    ->searchable(),                
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('status'),
-                
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Criado em')
+                    ->dateTime('d/m/Y'),
+
             ])
             ->filters([
                 //
@@ -120,7 +123,7 @@ class CustomerResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])->defaultSort('created_at', 'desc');
     }
 
     public static function getPages(): array

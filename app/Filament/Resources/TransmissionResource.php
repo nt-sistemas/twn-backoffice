@@ -53,7 +53,7 @@ class TransmissionResource extends Resource
                     ->label('Faturas')
                     ->numeric()
                     ->sortable(),
-                    Tables\Columns\TextColumn::make('invoice.reference')
+                Tables\Columns\TextColumn::make('invoice.reference')
                     ->label('Referência')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('customer.name')
@@ -67,12 +67,12 @@ class TransmissionResource extends Resource
                     ->sortable(),
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
-                    ->icon(fn (string $state): string => match ($state) {
+                    ->icon(fn(string $state): string => match ($state) {
                         'transmitting' => 'heroicon-o-clock',
                         'transmitted' => 'heroicon-o-check-circle',
                         'error' => 'heroicon-o-trash',
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'transmitting' => 'warning',
                         'transmitted' => 'success',
                         'error' => 'danger',
@@ -97,10 +97,8 @@ class TransmissionResource extends Resource
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-
-                ]),
-            ]);
+                Tables\Actions\BulkActionGroup::make([]),
+            ])->defaultSort('created_at', 'desc');
     }
 
     public static function getPages(): array
