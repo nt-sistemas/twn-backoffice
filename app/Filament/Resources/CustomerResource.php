@@ -16,29 +16,33 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
-    protected static ?string $navigationLabel = 'Clientes';
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationLabel = 'Clientes';
+    protected static ?string $modelLabel = 'Cliente';
+    protected static ?string $pluralModelLabel = 'Clientes';
+
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->label('Nome ou Razão Social')
+                    ->label('Razão Social')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('document')
-                    ->label('CPF/CNPJ')
+                    ->label('CNPJ')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('title')
                     ->label('Nome Fantasia')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('registration')
-                    ->label('Matrícula HS')
+                    ->label('HS Código de Cliente')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
+                    ->label('E-mail')
                     ->email()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('phone')
@@ -48,6 +52,9 @@ class CustomerResource extends Resource
                 Forms\Components\TextInput::make('address')
                     ->label('Endereço')
                     ->maxLength(255),
+                Forms\Components\TextInput::make('city')
+                    ->label('Cidade')
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('neighborhood')
                     ->label('Bairro')
                     ->maxLength(255),
@@ -56,9 +63,6 @@ class CustomerResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('complement')
                     ->label('Complemento')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('city')
-                    ->label('Cidade')
                     ->maxLength(255),
                 Forms\Components\Select::make('state')
                     ->label('Estado')
@@ -94,6 +98,9 @@ class CustomerResource extends Resource
                 Forms\Components\TextInput::make('postal_code')
                     ->label('CEP')
                     ->maxLength(255),
+                Forms\Components\Textarea::make('notes')
+                    ->label('Observações')
+                    ->columnSpanFull(),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Ativo')
                     ->required(),
@@ -108,13 +115,9 @@ class CustomerResource extends Resource
                     ->options([
                         'active' => 'Ativo',
                         'inactive' => 'Inativo',
-                        'pending' => 'Pendente',
-                        'suspended' => 'Suspenso',
                     ])
                     ->required(),
-                Forms\Components\Textarea::make('observation')
-                    ->label('Observação')
-                    ->columnSpanFull(),
+
             ]);
     }
 
@@ -123,21 +126,40 @@ class CustomerResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nome ou Razão Social')
+                    ->label('Razão Social')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('document')
-                    ->label('CPF/CNPJ')
+                    ->label('CNPJ')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Nome Fantasia')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('registration')
-                    ->label('Matrícula HS')
+                    ->label('HS Código de Cliente')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('E-mail')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('phone')
+                    ->label('Telefone')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('address')
+                    ->label('Endereço')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('city')
+                    ->label('Cidade')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('state')
+                    ->label('Estado')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('postal_code')
+                    ->searchable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Ativo')
+                    ->color('success')
+                    ->boolean(),
+
                 Tables\Columns\TextColumn::make('status'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
-                    ->dateTime('d/m/Y'),
 
             ])
             ->filters([
@@ -145,7 +167,6 @@ class CustomerResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -154,10 +175,19 @@ class CustomerResource extends Resource
             ])->defaultSort('created_at', 'desc');
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\InvoicesRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageCustomers::route('/'),
+            'index' => Pages\ListCustomers::route('/'),
+            'create' => Pages\CreateCustomer::route('/create'),
+            'edit' => Pages\EditCustomer::route('/{record}/edit'),
         ];
     }
 }
