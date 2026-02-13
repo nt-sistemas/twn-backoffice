@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Request;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use SimpleXMLElement;
 
 class SendNFSe implements ShouldQueue
 {
@@ -15,6 +16,7 @@ class SendNFSe implements ShouldQueue
 
     // Timeout after 120 seconds
     public $data = null;
+
     /**
      * Create a new job instance.
      */
@@ -23,34 +25,31 @@ class SendNFSe implements ShouldQueue
         $this->data = $data;
     }
 
-
     /**
      * Execute the job.
      */
     public function handle(): void
     {
-        log::info('Sending NFSe with data: ' . json_encode($this->data));
+        log::info('Sending NFSe with data: '.json_encode($this->data));
         $this->sendIntegration();
 
-        //$transmission->status = 'transmitted';
-        //$transmission->response_code = '200'; // Example response code
-        //$transmission->response_message = 'Transmission successful'; // Example response message
-        //$transmission->save();
+        // $transmission->status = 'transmitted';
+        // $transmission->response_code = '200'; // Example response code
+        // $transmission->response_message = 'Transmission successful'; // Example response message
+        // $transmission->save();
     }
 
     public function sendIntegration()
     {
         // Logic to send the NFSe
         // This could involve calling an external API or processing the data in some way
-        //,
+        // ,
         $client = new Client(['auth' => ['47387227000103', '@Twn387227']]);
         $headers = [
             'Content-Type' => 'application/xml',
-            'Authorization' => ['Basic ' . base64_encode('47387227000103:@Twn387227')],
+            'Authorization' => ['Basic '.base64_encode('47387227000103:@Twn387227')],
             'Cookie' => 'PHPSESSID=m7umnriutdjlho78jrg4qtkr55; cidade=padrao',
         ];
-
-
 
         $body = '
         <soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:net="net.atende">
@@ -59,10 +58,10 @@ class SendNFSe implements ShouldQueue
       <GerarNfseEnvio>
 <Rps>
 <InfDeclaracaoPrestacaoServico xmlns="http://www.abrasf.org.br/nfse.xsd" Id="RPS_1">
-<Competencia>' . $this->data['paid_date'] . '</Competencia> 
+<Competencia>'.$this->data['paid_date'].'</Competencia> 
 <Servico>
 <Valores>
-<ValorServicos>' . $this->data['amount'] . '</ValorServicos>
+<ValorServicos>'.$this->data['amount'].'</ValorServicos>
 <ValorDeducoes>0</ValorDeducoes>
 <ValorPis>00.00</ValorPis>
 <ValorCofins>00.00</ValorCofins>
@@ -73,10 +72,10 @@ class SendNFSe implements ShouldQueue
 <Aliquota>2.1700</Aliquota>
 </Valores>
 <IssRetido>2</IssRetido>
-<ItemListaServico>01.05</ItemListaServico>
+<ItemListaServico>01.05.01</ItemListaServico>
 <CodigoCnae>3089</CodigoCnae>
 <!--<CodigoTributacaoMunicipio>14.01</CodigoTributacaoMunicipio>-->
-<Discriminacao>' . $this->data['descriptions'] . '</Discriminacao>
+<Discriminacao>'.$this->data['descriptions'].'</Discriminacao>
 <CodigoMunicipio>4313409</CodigoMunicipio>
 <ExigibilidadeISS>1</ExigibilidadeISS>
 <MunicipioIncidencia>4313409</MunicipioIncidencia>		                       
@@ -90,18 +89,18 @@ class SendNFSe implements ShouldQueue
 <IdentificacaoTomador>
 <CpfCnpj>
 <!--<Cnpj>63513983000180</Cnpj>-->
-<Cnpj>' . $this->data['document'] . '</Cnpj>
+<Cnpj>'.$this->data['document'].'</Cnpj>
 </CpfCnpj>
 </IdentificacaoTomador>
-<RazaoSocial>' . $this->data['razao_social'] . '</RazaoSocial>
+<RazaoSocial>'.$this->data['razao_social'].'</RazaoSocial>
 <Endereco>
-<Endereco>' . $this->data['address'] . '</Endereco>
-<Numero>' . $this->data['number'] . '</Numero>' . PHP_EOL .
-(isset($this->data['complement']) && $this->data['complement'] !== null ? '<Complemento>' . $this->data['complement'] . '</Complemento>' : '') . '
-<Bairro>' . $this->data['neighborhood'] . '</Bairro>
-<CodigoMunicipio>' . $this->data['ibge_code'] . '</CodigoMunicipio>
-<Uf>' . $this->data['state'] . '</Uf>
-<Cep>' . $this->data['postal_code'] . '</Cep>
+<Endereco>'.$this->data['address'].'</Endereco>
+<Numero>'.$this->data['number'].'</Numero>'.PHP_EOL.
+(isset($this->data['complement']) && $this->data['complement'] !== null ? '<Complemento>'.$this->data['complement'].'</Complemento>' : '').'
+<Bairro>'.$this->data['neighborhood'].'</Bairro>
+<CodigoMunicipio>'.$this->data['ibge_code'].'</CodigoMunicipio>
+<Uf>'.$this->data['state'].'</Uf>
+<Cep>'.$this->data['postal_code'].'</Cep>
 </Endereco> 
 </TomadorServico>
 <RegimeEspecialTributacao>1</RegimeEspecialTributacao>
@@ -134,26 +133,46 @@ class SendNFSe implements ShouldQueue
 </soapenv:Envelope>
 ';
 
-
         $request = new Request('POST', 'https://novohamburgo.atende.net/?pg=services&service=WNENotaFiscalEletronicaNfe', $headers, $body);
         $res = $client->sendAsync($request)->wait();
+
+        $response = $res->getBody()->getContents();
+
+        $xml = new SimpleXMLElement($response);
+        $body = $xml->children('SOAP-ENV', true)->Body;
+
+        $array = json_decode(json_encode($body->children()), true);
+
         if ($res->getStatusCode() !== 200) {
-            throw new \Exception('Failed to send NFSe: ' . $res->getBody());
+            throw new \Exception('Failed to send NFSe: '.$response);
         }
         // Update the transmission status and response
-
-        Log::info('NFSe sent successfully' . (string) $res->getBody()->getContents());
-
         $transmission = Transmission::where('invoice_id', $this->data['id'])
             ->where('customer_id', $this->data['customer_id'])
             ->where('amount', $this->data['amount'])
             ->where('transmission_date', $this->data['paid_date'])
             ->first();
 
+        if ($array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno'] ?? false) {
 
-        $transmission->status = 'transmitted';
-        $transmission->response_code = 200;
-        $transmission->response_message = $res->getBody()->getContents();
-        $transmission->save();
+            Log::error('Error sending NFSe: '.$array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Mensagem']);
+
+            $transmission->update([
+                'status' => 'error',
+                'response_code' => $array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Codigo'],
+                'response_message' => $array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Mensagem'],
+            ]);
+
+            return;
+        } else {
+
+            Log::info('NFSe sent successfully'.(string) $res->getBody()->getContents());
+
+            $transmission->update([
+                'status' => 'transmitted',
+                'response_code' => 200,
+                'response_message' => (string) $res->getBody()->getContents(),
+            ]);
+        }
     }
 }

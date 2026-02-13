@@ -67,12 +67,12 @@ class TransmissionResource extends Resource
                     ->sortable(),
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
-                    ->icon(fn(string $state): string => match ($state) {
+                    ->icon(fn (string $state): string => match ($state) {
                         'transmitting' => 'heroicon-o-clock',
                         'transmitted' => 'heroicon-o-check-circle',
-                        'error' => 'heroicon-o-trash',
+                        'error' => 'heroicon-o-exclamation-circle',
                     })
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'transmitting' => 'warning',
                         'transmitted' => 'success',
                         'error' => 'danger',
@@ -93,7 +93,7 @@ class TransmissionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                //Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
