@@ -155,12 +155,22 @@ class SendNFSe implements ShouldQueue
 
         if ($array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno'] ?? false) {
 
-            Log::error('Error sending NFSe: '.$array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Mensagem']);
+            if (count($array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']) > 1) {
+                $messages = $array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno'];
+                $errorMessage = '';
+                foreach ($messages as $message) {
+                    $errorMessage .= 'Código: '.$message['Codigo'].' - Mensagem: '.$message['Mensagem'].PHP_EOL;
+                }
+            } else {
+                $errorMessage = 'Código: '.$array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Codigo'].' - Mensagem: '.$array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Mensagem'];
+            }
+
+            Log::error('Error sending NFSe: '.$errorMessage);
 
             $transmission->update([
                 'status' => 'error',
-                'response_code' => $array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Codigo'],
-                'response_message' => $array['GerarNfseResposta']['ListaMensagemRetorno']['MensagemRetorno']['Mensagem'],
+                'response_code' => 400,
+                'response_message' => $errorMessage,
             ]);
 
             return;
