@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TransmissionResource\Pages;
 use App\Models\Transmission;
+use App\Services\NotaFiscalService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -63,7 +64,9 @@ class TransmissionResource extends Resource
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Valor')
                     ->money('BRL')
-
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('attempts')
+                    ->label('Tentativas')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
@@ -92,9 +95,28 @@ class TransmissionResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver Detalhes')
+                    ->hiddenLabel()
+                    ->tooltip('Ver detalhes da transmissão'),
                 // Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('resend')
+                    ->label('Reenviar NFSe')
+                    ->action(function (Transmission $record) {
+                        // Dispatch the job to resend the NFSe
+
+                        $notaFiscalService = new NotaFiscalService;
+                        $notaFiscalService->resendIntegration($record->id);
+
+                        // Optionally, you can update the status to indicate it's being resent
+                        // $record->update(['status' => 'transmitting']);
+                    })
+                    ->disabled(fn (Transmission $record) => $record->status !== 'error')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->hiddenLabel()
+                    ->tooltip('Reenviar NFSe'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([]),

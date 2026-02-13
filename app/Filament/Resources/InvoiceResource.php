@@ -86,12 +86,12 @@ class InvoiceResource extends Resource
 
                 Tables\Columns\IconColumn::make('transmission.status')
                     ->label('Nota Fiscal')
-                    ->icon(fn(string $state): string => match ($state) {
+                    ->icon(fn (string $state): string => match ($state) {
                         'transmitting' => 'heroicon-o-clock',
                         'transmitted' => 'heroicon-o-check-circle',
-                        'error' => 'heroicon-o-trash',
+                        'error' => 'heroicon-o-exclamation-circle',
                     })
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'transmitting' => 'warning',
                         'transmitted' => 'success',
                         'error' => 'danger',

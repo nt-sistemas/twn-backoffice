@@ -18,6 +18,7 @@ class Transmission extends Model
         'transmission_date',
         'response_code',
         'response_message',
+        'attempts',
     ];
 
     protected $casts = [
