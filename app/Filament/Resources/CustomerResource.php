@@ -10,18 +10,18 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationLabel = 'Clientes';
-    protected static ?string $modelLabel = 'Cliente';
-    protected static ?string $pluralModelLabel = 'Clientes';
 
+    protected static ?string $navigationLabel = 'Clientes';
+
+    protected static ?string $modelLabel = 'Cliente';
+
+    protected static ?string $pluralModelLabel = 'Clientes';
 
     public static function form(Form $form): Form
     {
@@ -33,6 +33,14 @@ class CustomerResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('document')
                     ->label('CNPJ')
+                    ->mask('99.999.999/9999-99')
+                    ->placeholder('00.000.000/0000-00')
+                    ->unique(table: Customer::class, column: 'document', ignoreRecord: true)
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(fn ($livewire, $component) => $livewire->validateOnly($component->getStatePath()))
+                    ->validationMessages([
+                        'unique' => 'Este e-mail já está cadastrado em nossa base.',
+                    ])
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('title')
