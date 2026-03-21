@@ -25,6 +25,15 @@ jobs:
             # 2. Atualizar o código fonte
             git pull origin main
 
+            # RODAR COMPOSER USANDO A IMAGEM OFICIAL (Garante a pasta vendor)
+            docker run --rm -v $(pwd):/app composer:latest install --no-dev --optimize-autoloader
+
+            # AJUSTAR PERMISSÕES PARA O PHP-FPM (ID 33 é o www-data)
+            sudo chown -R 33:33 .
+
+            # REINICIAR A STACK
+            docker stack deploy -c stack-laravel.yml twn-backoffice
+
             # 3. Garantir permissões para os containers da Bitnami (User 1001)
             sudo chown -R 1001:1001 .
             sudo chmod -R 775 storage bootstrap/cache
