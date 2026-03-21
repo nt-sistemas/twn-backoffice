@@ -1,0 +1,49 @@
+name: Deploy BlackCloud Laravel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH Deploy via BlackCloud Manager
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Entrar na pasta do projeto (O nome da pasta deve ser igual ao repo)
+            cd /var/www/html/${{ github.event.repository.name }}
+
+            # 2. Atualizar o código fonte
+            git pull origin main
+
+            # 3. Garantir permissões para os containers da Bitnami (User 1001)
+            sudo chown -R 1001:1001 .
+            sudo chmod -R 775 storage bootstrap/cache
+
+            # 4. Build de Backend (Composer) usando container temporário
+            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.2 \
+              composer install --no-dev --optimize-autoloader --no-interaction
+
+            # 5. Build de Frontend (Tailwind/Vite) usando container Node
+            docker run --rm -v $(pwd):/app node:20-alpine \
+              sh -c "cd /app && npm install && npm run build"
+
+            # 6. Rodar Migrations (Conectando na rede privada para achar o MySQL)
+            docker run --rm --network rede-cloud-privada -v $(pwd):/app bitnami/php-fpm:8.2 \
+              php /app/artisan migrate --force
+
+            # 7. Limpar e Gerar Caches do Laravel
+            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.2 \
+              sh -c "php /app/artisan config:cache && php /app/artisan route:cache && php /app/artisan view:cache"
+
+            # 8. Atualizar os serviços no Docker Swarm (Força o reinício dos containers)
+            # Substitua 'ntsistemas' pelo nome da stack que você deu no deploy
+            docker service update --force ntsistemas_laravel-app
+            docker service update --force ntsistemas_laravel-web
+            docker service update --force ntsistemas_laravel-worker
+            docker service update --force ntsistemas_laravel-scheduler
