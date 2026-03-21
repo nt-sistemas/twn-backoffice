@@ -30,7 +30,7 @@ jobs:
             sudo chmod -R 775 storage bootstrap/cache
 
             # 4. Build de Backend (Composer) usando container temporário
-            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.5 \
+            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.2 \
               composer install --no-dev --optimize-autoloader --no-interaction
 
             # 5. Build de Frontend (Tailwind/Vite) usando container Node
@@ -42,7 +42,7 @@ jobs:
               php /app/artisan migrate --force
 
             # 7. Limpar e Gerar Caches do Laravel
-            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.5 \
+            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.2 \
               sh -c "php /app/artisan config:cache && php /app/artisan route:cache && php /app/artisan view:cache"
 
             # 8. Atualizar os serviços no Docker Swarm (Força o reinício dos containers)
