@@ -50,4 +50,4 @@ jobs:
             docker service update --force twn-backoffice_app
             docker service update --force twn-backoffice_web
             docker service update --force twn-backoffice_worker
-            docker service update --force twn-backoffice_scheduler
+            #docker service update --force twn-backoffice_scheduler
