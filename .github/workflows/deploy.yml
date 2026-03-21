@@ -26,7 +26,7 @@ jobs:
             git pull origin main
 
             # RODAR COMPOSER USANDO A IMAGEM OFICIAL (Garante a pasta vendor)
-            docker run --rm -v $(pwd):/app composer:latest install --no-dev --optimize-autoloader
+            docker run --rm -v $(pwd):/app composer:latest install --ignore-platform-reqs --no-dev --optimize-autoloader
 
             # AJUSTAR PERMISSÕES PARA O PHP-FPM (ID 33 é o www-data)
             sudo chown -R 33:33 .
