@@ -42,8 +42,8 @@ jobs:
               sh -c "php /app/artisan config:cache && php /app/artisan route:cache && php /app/artisan view:cache"
 
             # 8. Atualizar os serviços no Docker Swarm (Força o reinício dos containers)
-            # Substitua 'ntsistemas' pelo nome da stack que você deu no deploy
-            docker service update --force ntsistemas_laravel-app
-            docker service update --force ntsistemas_laravel-web
-            docker service update --force ntsistemas_laravel-worker
-            docker service update --force ntsistemas_laravel-scheduler
+            # Substitua 'twn-backoffice' pelo nome da stack que você deu no deploy
+            docker service update --force twn-backoffice_laravel-app
+            docker service update --force twn-backoffice_laravel-web
+            docker service update --force twn-backoffice_laravel-worker
+            docker service update --force twn-backoffice_laravel-scheduler
