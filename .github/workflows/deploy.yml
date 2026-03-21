@@ -30,7 +30,7 @@ jobs:
             sudo chmod -R 775 storage bootstrap/cache
 
             # 4. Build de Backend (Composer) usando container temporário
-            docker run --rm -v $(pwd):/app bitnami/php-fpm:latest \
+            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.3 \
               composer install --no-dev --optimize-autoloader --no-interaction
 
             # 5. Build de Frontend (Tailwind/Vite) usando container Node
@@ -38,11 +38,11 @@ jobs:
               sh -c "cd /app && npm install && npm run build"
 
             # 6. Rodar Migrations (Conectando na rede privada para achar o MySQL)
-            docker run --rm --network rede-cloud-privada -v $(pwd):/app bitnami/php-fpm:latest \
+            docker run --rm --network rede-cloud-privada -v $(pwd):/app bitnami/php-fpm:8.3 \
               php /app/artisan migrate --force
 
             # 7. Limpar e Gerar Caches do Laravel
-            docker run --rm -v $(pwd):/app bitnami/php-fpm:latest \
+            docker run --rm -v $(pwd):/app bitnami/php-fpm:8.3 \
               sh -c "php /app/artisan config:cache && php /app/artisan route:cache && php /app/artisan view:cache"
 
             # 8. Atualizar os serviços no Docker Swarm (Força o reinício dos containers)
