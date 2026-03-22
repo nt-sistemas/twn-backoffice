@@ -48,7 +48,11 @@ jobs:
 
             # 6. Rodar Migrations (Conectando na rede privada para achar o MySQL)
             docker run --rm --network rede-cloud-privada -v $(pwd):/app php:8.3-fpm \
-              php /app/artisan migrate --force
+              sh -c "curl -sSL https://github.com -o /usr/local/bin/install-php-extensions && 
+              chmod +x /usr/local/bin/install-php-extensions && 
+              install-php-extensions pdo_mysql && 
+              php /app/artisan migrate --force"
+
 
             # 7. Limpar e Gerar Caches do Laravel
             docker run --rm -v $(pwd):/app php:8.3-fpm \
