@@ -32,7 +32,7 @@ jobs:
             sudo chown -R 33:33 .
 
             # REINICIAR A STACK
-            docker stack deploy -c twn-backoffice.yml twn-backoffice
+            docker stack deploy -c /root/twn-backoffice.yml twn-backoffice
 
             # 3. Garantir permissões para os containers da Bitnami (User 1001)
             sudo chown -R 1001:1001 .
