@@ -1,66 +1,78 @@
-name: Deploy BlackCloud Laravel
+name: CI/CD BlackCloud - Laravel Filament
 
 on:
   push:
     branches: [main]
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH Deploy via BlackCloud Manager
+      - name: 1. Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Docker Buildx (Cache Inteligente)
+        uses: docker/setup-buildx-action@v3
+
+      - name: 3. Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 4. Build e Push da Imagem (Dockerfile)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/twn-backoffice:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-vps:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Conectar via SSH e Atualizar Código Estático (Assets)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Carregar a chave SSH para o Git não pedir senha
-            eval "$(ssh-agent -s)"
-            ssh-add ~/.ssh/github_actions
-
-            # 1. Entrar na pasta do projeto (O nome da pasta deve ser igual ao repo)
-            cd /var/www/html/twn-backoffice
-
-            # 2. Atualizar o código fonte
+            # Entra na pasta para o Nginx ler os arquivos estáticos (CSS/JS/Imagens)
+            cd /var/www/html/${{ github.event.repository.name }}
             git pull origin main
 
-            # RODAR COMPOSER USANDO A IMAGEM OFICIAL (Garante a pasta vendor)
-            docker run --rm -v $(pwd):/app composer:latest install --ignore-platform-reqs --no-dev --optimize-autoloader
+      - name: 2. Atualizar Stack no Docker Swarm
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Força o Swarm a baixar a imagem nova e atualizar os serviços
+            docker stack deploy --with-registry-auth -c infra/prod.yml twn-backoffice
 
-            # AJUSTAR PERMISSÕES PARA O PHP-FPM (ID 33 é o www-data)
-            sudo chown -R 33:33 .
+      - name: 3. Executar Database Migrations
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Aguarda o container subir com os drivers novos
+            sleep 20
+            # Roda as migrations dentro do novo container 'app'
+            docker exec $(docker ps -q -f name=twn-backoffice_app) php artisan migrate --force
 
-            # REINICIAR A STACK
-            docker stack deploy -c infra/prod.yml twn-backoffice
-
-            # 3. Garantir permissões para os containers da Bitnami (User 1001)
-            sudo chown -R 1001:1001 .
-            sudo chmod -R 775 storage bootstrap/cache
-
-            # 4. Build de Backend (Composer) usando container temporário
-            docker run --rm -v $(pwd):/app php:8.3-fpm \
-              composer install --no-dev --optimize-autoloader --no-interaction
-
-            # 5. Build de Frontend (Tailwind/Vite) usando container Node
-            docker run --rm -v $(pwd):/app node:20-alpine \
-              sh -c "cd /app && npm install && npm run build"
-
-            # 6. Rodar Migrations (Conectando na rede privada para achar o MySQL)
-            docker run --rm --network rede-cloud-privada -v $(pwd):/app php:8.3-fpm \
-              sh -c "curl -sSL https://github.com -o /usr/local/bin/install-php-extensions && 
-              chmod +x /usr/local/bin/install-php-extensions && 
-              install-php-extensions pdo_mysql && 
-              php /app/artisan migrate --force"
-
-
-            # 7. Limpar e Gerar Caches do Laravel
-            docker run --rm -v $(pwd):/app php:8.3-fpm \
-              sh -c "php /app/artisan config:cache && php /app/artisan route:cache && php /app/artisan view:cache"
-
-            # 8. Atualizar os serviços no Docker Swarm (Força o reinício dos containers)
-            # Substitua 'twn-backoffice' pelo nome da stack que você deu no deploy
-            docker service update --force twn-backoffice_app
-            docker service update --force twn-backoffice_web
-            docker service update --force twn-backoffice_worker
-            #docker service update --force twn-backoffice_scheduler
+      - name: 4. Limpeza de Caches e Otimização
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker exec $(docker ps -q -f name=twn-backoffice_app) php artisan config:cache
+            docker exec $(docker ps -q -f name=twn-backoffice_app) php artisan route:cache
+            docker exec $(docker ps -q -f name=twn-backoffice_app) php artisan view:cache
