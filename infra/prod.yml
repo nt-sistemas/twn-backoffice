@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  app:
+    build: . # Sua imagem pronta
+    networks:
+      - rede-cloud-privada
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  web:
+    image: bitnami/nginx:latest
+    volumes:
+      # O Nginx ainda precisa do código para servir arquivos estáticos (CSS/JS)
+      - /var/www/html/twn-backoffice:/app
+      - /var/www/html/twn-backoffice/docker/nginx.conf:/opt/bitnami/nginx/conf/server_blocks/my_app.conf:ro
+    networks:
+      - rede-cloud-privada
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.twn-backoffice.rule=Host(`app.ntsistemasweb.com.br`)"
+        - "traefik.http.routers.twn-backoffice.entrypoints=websecure"
+        - "traefik.http.routers.twn-backoffice.tls.certresolver=meuresolver"
+        - "traefik.http.services.twn-backoffice.loadbalancer.server.port=8080"
+
+  worker:
+    build: . # Sua imagem pronta
+    command: php artisan queue:work --verbose --tries=3
+    networks:
+      - rede-cloud-privada
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  scheduler:
+    build: . # Sua imagem pronta
+    command: sh -c "while [ true ]; do php artisan schedule:run --no-interaction; sleep 60; done"
+    networks:
+      - rede-cloud-privada
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+networks:
+  rede-cloud-privada:
+    external: true
