@@ -25,5 +25,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
 
-EXPOSE 9000
+EXPOSE 80 9000
 CMD ["php-fpm"]
