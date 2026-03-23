@@ -12,17 +12,15 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # 3. Configurar diretório de trabalho
 WORKDIR /var/www/html
 
-# 4. Copiar o código (Garante que o ponto '.' pegue a raiz do seu projeto)
+# 4. Copiar o projeto
 COPY . .
 
-# 5. Instalar dependências e gerar autoload
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# 5. FORÇAR a instalação das dependências (O que estava faltando!)
+# O --no-dev e --optimize-autoloader garantem uma imagem leve e rápida
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
-# 6. Permissões para o usuário www-data
+# 6. Permissões finais
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# 7. Teste de sanidade (Verifica se o artisan existe na imagem)
-RUN ls -la /var/www/html/artisan
 
 EXPOSE 9000
 CMD ["php-fpm"]
