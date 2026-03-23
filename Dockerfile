@@ -35,8 +35,10 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # 7. Permissões
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 8. Script de inicialização
-RUN echo "#!/bin/sh\nservice nginx start && php-fpm" > /start.sh && chmod +x /start.sh
+# 8. Script de inicialização corrigido
+RUN echo '#!/bin/sh\nservice nginx start\nphp-fpm -F' > /usr/local/bin/start.sh \
+    && chmod +x /usr/local/bin/start.sh
+
 
 EXPOSE 80 9000
 CMD ["/start.sh"]
