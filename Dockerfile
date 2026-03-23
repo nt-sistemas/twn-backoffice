@@ -9,23 +9,17 @@ RUN apt-get update && apt-get install -y \
 # 2. Instalar Composer oficial
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 3. Definir diretório de trabalho
-WORKDIR /var/www
+# 3. Definir diretório de trabalho PADRÃO
+WORKDIR /var/www/html
 
-# 4. Copiar arquivos do Composer primeiro
-COPY composer.json composer.lock ./
-
-# 5. Instalar dependências (Garante a criação da pasta vendor)
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
-
-# 6. Copiar o restante do código
+# 4. Copiar TUDO para dentro da imagem
 COPY . .
 
-# 7. Gerar o Autoload (Sem rodar comandos do Artisan aqui)
-RUN composer dump-autoload --optimize
+# 5. Instalar dependências (Garante a criação da pasta vendor no local correto)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
-# 8. Ajustar permissões
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# 6. Permissões para o usuário www-data
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 9000
 CMD ["php-fpm"]
