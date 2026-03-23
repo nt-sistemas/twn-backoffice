@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    image: seu-usuario-dockerhub/twn-backoffice:latest
+    volumes:
+      - .:/var/www
+    environment:
+      - DB_HOST=db
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=laravel
