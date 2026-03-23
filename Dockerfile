@@ -1,32 +1,36 @@
+# Estágio 1: Node.js para build de assets
+FROM node:20-slim AS node-build
+WORKDIR /app
+COPY . .
+RUN npm install && npm run build
+
+# Estágio 2: PHP + Nginx (Imagem Final)
 FROM php:8.3-fpm
 
 # 1. Instalar dependências de sistema e Nginx
 RUN apt-get update && apt-get install -y \
-    nginx git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev libicu-dev
-
-# 2. Instalar Node.js 22 (Método Manual Oficial para Debian/Ubuntu)
-RUN mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
-    && apt-get update && apt-get install nodejs -y
-
-# 3. Instalar extensões PHP e Redis
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl \
+    nginx git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev libicu-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl \
     && pecl install redis && docker-php-ext-enable redis
 
-# 4. Configurar Nginx
+# 2. Trazer o binário do Node e NPM do estágio anterior (caso precise rodar algo no container)
+COPY --from=node:20-slim /usr/local/bin /usr/local/bin
+COPY --from=node:20-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+
+# 3. Configurar Nginx
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# 5. Preparar o código
+# 4. Preparar o código
 WORKDIR /var/www/html
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . .
 
-# 6. Instalar dependências e Build (Vite/Tailwind)
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
-    && npm install \
-    && npm run build
+# 5. Copiar os ASSETS buildados no estágio 1 (O que faz o Filament funcionar)
+COPY --from=node-build /app/public/build ./public/build
+
+# 6. Instalar dependências PHP
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # 7. Permissões
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
