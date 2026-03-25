@@ -1,30 +1,53 @@
-# ESTÁGIO 1: Compilar CSS/JS (Node)
-FROM node:20-slim AS assets-builder
-WORKDIR /app
-COPY . .
-RUN npm install && npm run build
+FROM node:22-bookworm-slim AS node-runtime
 
-# ESTÁGIO 2: Servir a Aplicação (PHP)
-FROM php:8.3-fpm
+FROM php:8.4-fpm
 
-# Instalar extensões PHP essenciais
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev libicu-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl \
-    && pecl install redis && docker-php-ext-enable redis
+    git \
+    curl \
+    libicu-dev \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libwebp-dev \
+    libxpm-dev 
 
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl sockets zip \
+    && php -m | grep -i '^intl$'
+
+# Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
-COPY . .
+# Add Node.js 22 runtime to the same PHP image
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && ln -sf /usr/local/lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack \
+    && node -v \
+    && npm -v
 
-# Copiar os arquivos compilados (CSS/JS) do estágio anterior
-COPY --from=assets-builder /app/public/build ./public/build
+# Create system user to run Composer and Artisan Commands
+#RUN useradd -G www-data,root -u $uid -d /home/$user $user
+#RUN mkdir -p /home/$user/.composer && \
+#    chown -R $user:$user /home/$user
 
-# Instalar dependências PHP
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install redis
+RUN pecl install -o -f redis \
+    &&  rm -rf /tmp/pear \
+    &&  docker-php-ext-enable redis
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Set working directory
+WORKDIR /var/www
 
-EXPOSE 9000
-CMD ["php-fpm"]

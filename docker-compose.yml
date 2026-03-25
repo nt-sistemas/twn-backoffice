@@ -1,13 +1,73 @@
+version: "3.8"
+
 services:
-  app:
-    build: .
-    image: seu-usuario-dockerhub/twn-backoffice:latest
-    volumes:
-      - .:/var/www
-    environment:
-      - DB_HOST=db
-  db:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=laravel
+    # image project
+    app:
+        container_name: twn-backoffice-app
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: ntsistemasw/twn-backoffice:latest
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        depends_on: 
+            - redis
+        networks: 
+            - twn-network
+    
+    # nginx
+    nginx:
+        container_name: twn-backoffice-nginx
+        image: nginx:alpine
+        restart: unless-stopped
+        ports: 
+            - "8989:80"
+        volumes: 
+            - ./:/var/www
+            - ./docker/nginx/:/etc/nginx/conf.d/
+        networks: 
+            - twn-network
+
+    # db mysql
+    mysql:
+        container_name: twn-backoffice-mysql
+        image: mysql:8.0
+        restart: unless-stopped
+        environment: 
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+        volumes: 
+            - ./.docker/mysql/dbdata:/var/lib/mysql
+        ports: 
+            - "3388:3306"
+        networks: 
+            - twn-network
+
+    # queue
+    queue:
+        container_name: twn-backoffice-queue
+        image: ntsistemasw/twn-backoffice:latest
+        restart: unless-stopped
+        command: "php artisan queue:work"
+        volumes: 
+            - ./:/var/www
+        depends_on: 
+            - redis
+            - app
+        networks: 
+            - twn-network
+
+    # redis
+    redis:
+        container_name: twn-backoffice-redis
+        image: redis:latest
+        networks: 
+            - twn-network
+
+networks: 
+    twn-network:
+        driver: bridge
