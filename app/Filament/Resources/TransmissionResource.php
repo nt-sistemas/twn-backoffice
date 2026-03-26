@@ -112,7 +112,7 @@ class TransmissionResource extends Resource
                         // Optionally, you can update the status to indicate it's being resent
                         // $record->update(['status' => 'transmitting']);
                     })
-                    ->disabled(fn (Transmission $record) => $record->status !== 'error')
+                    ->disabled(fn (Transmission $record) => $record->status !== 'error' && $record->status !== 'transmitting')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
                     ->hiddenLabel()
