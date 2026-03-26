@@ -15,6 +15,8 @@ class SendNFSe implements ShouldQueue
     use Queueable;
 
     // Timeout after 120 seconds
+    public $timeout = 300;
+
     public $data = null;
 
     /**
@@ -142,6 +144,8 @@ class SendNFSe implements ShouldQueue
         $body = $xml->children('SOAP-ENV', true)->Body;
 
         $array = json_decode(json_encode($body->children()), true);
+
+        Log::info('Response from NFSe service: '.json_encode($array));
 
         if ($res->getStatusCode() !== 200) {
             throw new \Exception('Failed to send NFSe: '.$response);
